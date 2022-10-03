@@ -1,0 +1,14 @@
+__pycache__/
+env/
+datasets/
+tensorboard_runs/
+my_logs/
+dataset/
+*.csv
+.ipynb_checkpoints/
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.tar
