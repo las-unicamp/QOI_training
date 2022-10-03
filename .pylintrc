@@ -155,6 +155,8 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         C0114,
+        C0115,
+        C0116,
         E0015
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -433,8 +435,8 @@ function-naming-style=snake_case
 good-names=i,
            j,
            k,
-           ex,
-           Run,
+           x,
+           y,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
@@ -533,7 +535,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+generated-members=torch.*
 
 # Tells whether to warn about missing members when the owner of the attribute
 # is inferred to be None.
