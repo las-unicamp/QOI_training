@@ -50,11 +50,8 @@ class SimulationDataset(Dataset):
         return input_images, outputs
 
 
-if __name__ == "__main__":
-    import torchvision
-    from src.visualization import visualize
-
-    FILE = "dataset.csv"
+def _test():
+    file = "dataset.csv"
 
     transform = torchvision.transforms.Compose(
         [
@@ -67,13 +64,20 @@ if __name__ == "__main__":
     )
 
     dataset = SimulationDataset(
-        FILE, ["images"], ["Cl", "Cd", "Cm"], transform=transform
+        file, ["images"], ["Cl", "Cd", "Cm"], transform=transform
     )
 
-    SELECTED_INDEX = 0
-    images, coefficients = dataset[SELECTED_INDEX]
+    selected_index = 0
+    images, coefficients = dataset[selected_index]
 
     # visualize(input_image=images[0])
     print(images)
     visualize(image=images[0])
     print(f"Coefficient values: {coefficients}")
+
+
+if __name__ == "__main__":
+    import torchvision
+    from src.visualization import visualize
+
+    _test()
