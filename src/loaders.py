@@ -1,5 +1,5 @@
+from typing import List, Any
 import torch
-from typing import List
 from torch.utils.data.dataloader import DataLoader
 from src.dataset import SimulationDataset
 
@@ -10,13 +10,14 @@ def get_dataloaders(
     batch_size: int,
     input_column_names: List[str],
     output_column_names: List[str],
-    transform=None,
+    transform_train: Any,
+    transform_valid: Any,
+    transform_test: Any,
 ) -> List[DataLoader]:
     dataset = SimulationDataset(
         path_to_dataset,
         input_column_names=input_column_names,
         output_column_names=output_column_names,
-        transform=transform,
     )
 
     dataset.files = dataset.files[:1]  # FIXME
@@ -24,6 +25,10 @@ def get_dataloaders(
     train_set = dataset
     valid_set = dataset
     test_set = dataset
+
+    train_set.transform = transform_train
+    valid_set.transform = transform_valid
+    test_set.transform = transform_test
 
     # train_proportion = 0.8
     # valid_proportion = 0.1

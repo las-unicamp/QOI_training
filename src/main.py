@@ -5,6 +5,7 @@ from src.models.models import get_model, AvailableModels
 from src.checkpoint import load_checkpoint, save_checkpoint
 from src.early_stopping import EarlyStopping
 from src.loaders import get_dataloaders
+from src.augmentation import augment_data
 from src.running import Runner, run_epoch
 from src.tensorboard_tracker import TensorboardTracker
 from src.device import device
@@ -42,21 +43,29 @@ def main():
     for the desired number of epochs.
     """
 
-    model_name = AvailableModels.RESNET
+    model_name = AvailableModels.VIT
 
-    model, transform = get_model(
+    model, transform_preprocess = get_model(
         model_name,
         num_classes=len(OUTPUT_COLUMN_NAMES),
-        use_data_augmentation=USE_DATA_AUGMENTATION,
     )
+
+    if USE_DATA_AUGMENTATION:
+        transform_train = augment_data(transform_preprocess)
+        transform_valid = augment_data(transform_preprocess)
+    else:
+        transform_train = transform_preprocess
+        transform_valid = transform_preprocess
 
     train_loader, valid_loader, _ = get_dataloaders(
         PATH_TO_DATASET,
         num_workers=NUM_WORKERS,
         batch_size=BATCH_SIZE,
-        transform=transform,
         input_column_names=INPUT_COLUMN_NAMES,
         output_column_names=OUTPUT_COLUMN_NAMES,
+        transform_train=transform_train,
+        transform_valid=transform_valid,
+        transform_test=transform_preprocess,
     )
 
     optimizer = torch.optim.NAdam(model.parameters(), lr=LEARNING_RATE)

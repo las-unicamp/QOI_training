@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from src.augmentation import augment_data
 from src.models.implementations.models import (
     VGGModel,
     InceptionModel,
@@ -48,9 +47,7 @@ def _factory_model(model_name: AvailableModels):
     return model_fn, weights, fine_tune_strategy
 
 
-def get_model(
-    model_name: AvailableModels, num_classes: int, use_data_augmentation: bool = False
-):
+def get_model(model_name: AvailableModels, num_classes: int):
     """
     Function to get the model and its preprocessing steps.
 
@@ -80,9 +77,6 @@ def get_model(
 
     # get the preprocessing expected by the selected model
     transform = weights.transforms()
-
-    if use_data_augmentation:
-        transform = augment_data(transform)
 
     return model, transform
 
