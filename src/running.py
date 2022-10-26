@@ -59,7 +59,7 @@ class Runner:
         loss.backward()
         self.optimizer.step()
 
-    def _stack_and_move_data_to_device(
+    def _parse_data(
         self, inputs: torch.Tensor, targets: torch.Tensor
     ) -> list[torch.Tensor, torch.Tensor]:
         inputs = torch.hstack(inputs)
@@ -90,7 +90,7 @@ class Runner:
             self.model.eval()
 
         for batch_index, (inputs, targets) in progress_bar:
-            inputs, targets = self._stack_and_move_data_to_device(inputs, targets)
+            inputs, targets = self._parse_data(inputs, targets)
 
             if self.optimizer:
                 # with torch.autocast(

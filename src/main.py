@@ -8,7 +8,6 @@ from src.loaders import get_dataloaders
 from src.augmentation import augment_data
 from src.running import Runner, run_epoch
 from src.tensorboard_tracker import TensorboardTracker
-from src.device import device
 from src.timeit import timeit
 
 
@@ -30,9 +29,6 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 torch.manual_seed(42)
 torch.cuda.manual_seed_all(42)
-
-
-print(f"Running on {device}")
 
 
 @timeit
@@ -84,6 +80,8 @@ def main():
     valid_runner = Runner(valid_loader, model, is_inception=is_inception)
 
     tracker = TensorboardTracker(log_dir=LOG_ROOTDIR + model_name.name)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if LOAD_MODEL:
         (
