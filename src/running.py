@@ -61,7 +61,7 @@ class Runner:
 
     def _parse_data(
         self, inputs: torch.Tensor, targets: torch.Tensor
-    ) -> list[torch.Tensor, torch.Tensor]:
+    ) -> List[torch.Tensor]:
         inputs = torch.hstack(inputs)
         targets = torch.t(torch.stack(targets))
 
