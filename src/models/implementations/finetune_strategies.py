@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torchvision.models import (
     VGG,
@@ -9,6 +10,15 @@ from torchvision.models import (
 from ..interfaces import FineTuneModelStrategy
 
 
+def copy_weights_channelwise(layer, weights, num_copies):
+    with torch.no_grad():
+        for i in range(num_copies):
+            index_start = i * 3
+            index_end = (i + 1) * 3
+            layer.weight[:, index_start:index_end] = weights
+    return layer
+
+
 class FineTuneVGG(FineTuneModelStrategy):
     def change_num_classes(self, model: VGG, num_classes: int = 3) -> VGG:
         in_features = model.classifier[6].in_features
@@ -17,6 +27,16 @@ class FineTuneVGG(FineTuneModelStrategy):
 
     def change_top_layers(self, model, new_layers):
         raise NotImplementedError()
+
+    def change_first_conv_layer(self, model, num_input_images):
+        first_layer = model.features[0]
+        weight = first_layer.weight.clone()
+        first_layer = nn.Conv2d(
+            3 * num_input_images, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)
+        )
+        first_layer = copy_weights_channelwise(first_layer, weight, num_input_images)
+        model.features[0] = first_layer
+        return model
 
 
 class FineTuneInception(FineTuneModelStrategy):
@@ -39,6 +59,16 @@ class FineTuneInception(FineTuneModelStrategy):
         )
         return model
 
+    def change_first_conv_layer(self, model, num_input_images):
+        first_layer = model.Conv2d_1a_3x3.conv
+        weight = first_layer.weight.clone()
+        first_layer = nn.Conv2d(
+            3 * num_input_images, 32, kernel_size=(3, 3), stride=(2, 2), bias=False
+        )
+        first_layer = copy_weights_channelwise(first_layer, weight, num_input_images)
+        model.Conv2d_1a_3x3.conv = first_layer
+        return model
+
 
 class FineTuneEfficientNetB4(FineTuneModelStrategy):
     def change_num_classes(self, model: EfficientNet, num_classes: int) -> EfficientNet:
@@ -49,6 +79,21 @@ class FineTuneEfficientNetB4(FineTuneModelStrategy):
     def change_top_layers(self, model, new_layers):
         raise NotImplementedError()
 
+    def change_first_conv_layer(self, model, num_input_images):
+        first_layer = model.features[0][0]
+        weight = first_layer.weight.clone()
+        first_layer = nn.Conv2d(
+            3 * num_input_images,
+            48,
+            kernel_size=(3, 3),
+            stride=(2, 2),
+            padding=(1, 1),
+            bias=False,
+        )
+        first_layer = copy_weights_channelwise(first_layer, weight, num_input_images)
+        model.features[0][0] = first_layer
+        return model
+
 
 class FineTuneResNet50(FineTuneModelStrategy):
     def change_num_classes(self, model: ResNet, num_classes: int) -> ResNet:
@@ -58,6 +103,21 @@ class FineTuneResNet50(FineTuneModelStrategy):
 
     def change_top_layers(self, model, new_layers):
         raise NotImplementedError()
+
+    def change_first_conv_layer(self, model, num_input_images):
+        first_layer = model.conv1
+        weight = first_layer.weight.clone()
+        first_layer = nn.Conv2d(
+            3 * num_input_images,
+            64,
+            kernel_size=(7, 7),
+            stride=(2, 2),
+            padding=(3, 3),
+            bias=False,
+        )
+        first_layer = copy_weights_channelwise(first_layer, weight, num_input_images)
+        model.conv1 = first_layer
+        return model
 
 
 class FineTuneViTB16(FineTuneModelStrategy):
@@ -70,3 +130,13 @@ class FineTuneViTB16(FineTuneModelStrategy):
 
     def change_top_layers(self, model, new_layers):
         raise NotImplementedError()
+
+    def change_first_conv_layer(self, model, num_input_images):
+        first_layer = model.conv_proj
+        weight = first_layer.weight.clone()
+        first_layer = nn.Conv2d(
+            3 * num_input_images, 768, kernel_size=(16, 16), stride=(16, 16)
+        )
+        first_layer = copy_weights_channelwise(first_layer, weight, num_input_images)
+        model.conv_proj = first_layer
+        return model

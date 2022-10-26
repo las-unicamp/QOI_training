@@ -19,6 +19,10 @@ class FineTuneModelStrategy(ABC):
     def change_top_layers(self, model: Any, new_layers: Type[nn.Module]) -> Any:
         raise NotImplementedError("You should implement this!")
 
+    @abstractmethod
+    def change_first_conv_layer(self, model: Any, num_input_images: int) -> Any:
+        raise NotImplementedError("You should implement this!")
+
 
 class ModelFactory(ABC):
     """

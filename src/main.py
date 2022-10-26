@@ -21,9 +21,9 @@ LEARNING_RATE = 1e-5
 LOAD_MODEL = False
 PATH_TO_DATASET = "dataset.csv"
 LOG_ROOTDIR = "./tensorboard_runs/"
-INPUT_COLUMN_NAMES = ["images"]
+INPUT_COLUMN_NAMES = ["images", "images"]
 OUTPUT_COLUMN_NAMES = ["Cl", "Cd", "Cm"]
-USE_DATA_AUGMENTATION = True
+USE_DATA_AUGMENTATION = False
 
 # torch.use_deterministic_algorithms(True)
 torch.backends.cudnn.deterministic = True
@@ -45,9 +45,13 @@ def main():
 
     model_name = AvailableModels.VIT
 
+    is_inception = bool(model_name == AvailableModels.INCEPTION)
+
     model, transform_preprocess = get_model(
         model_name,
         num_classes=len(OUTPUT_COLUMN_NAMES),
+        num_input_images=len(INPUT_COLUMN_NAMES),
+        is_inception=is_inception,
     )
 
     if USE_DATA_AUGMENTATION:
@@ -73,8 +77,6 @@ def main():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=40, factor=0.6, verbose=True
     )
-
-    is_inception = bool(model_name == AvailableModels.INCEPTION)
 
     train_runner = Runner(
         train_loader, model, optimizer=optimizer, is_inception=is_inception

@@ -47,7 +47,12 @@ def _factory_model(model_name: AvailableModels):
     return model_fn, weights, fine_tune_strategy
 
 
-def get_model(model_name: AvailableModels, num_classes: int):
+def get_model(
+    model_name: AvailableModels,
+    num_classes: int,
+    is_inception: bool,
+    num_input_images: int = 1,
+):
     """
     Function to get the model and its preprocessing steps.
 
@@ -62,7 +67,10 @@ def get_model(model_name: AvailableModels, num_classes: int):
     model_fn, weights, fine_tune_strategy = _factory_model(model_name)
 
     # initialize the model
-    model = model_fn(weights=weights)
+    if is_inception:
+        model = model_fn(weights=weights, transform_input=False)
+    else:
+        model = model_fn(weights=weights)
 
     # freezes the network
     for param in model.parameters():
@@ -75,6 +83,9 @@ def get_model(model_name: AvailableModels, num_classes: int):
     # one can also redefine the entire classifier/regressor with:
     # fine_tune_strategy.change_top_layers(model, new_layers)
 
+    # change first conv layer if your network takes multiple input images
+    model = fine_tune_strategy.change_first_conv_layer(model, num_input_images)
+
     # get the preprocessing expected by the selected model
     transform = weights.transforms()
 
@@ -82,7 +93,7 @@ def get_model(model_name: AvailableModels, num_classes: int):
 
 
 def test():
-    model_name = AvailableModels.VGG
+    model_name = AvailableModels.EFFICIENT
 
     model_fn, weights, fine_tune_strategy = _factory_model(model_name)
 
