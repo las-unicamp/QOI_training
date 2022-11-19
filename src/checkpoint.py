@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 
 
@@ -17,12 +18,18 @@ def save_checkpoint(
     torch.save(state, filename)
 
 
-def load_checkpoint(device, model, optimizer, filename="my_checkpoint.pth.tar"):
+def load_checkpoint(
+    device,
+    model,
+    optimizer: Optional[torch.optim.Optimizer] = None,
+    filename="my_checkpoint.pth.tar",
+):
     print("=> Loading checkpoint")
 
     checkpoint = torch.load(filename, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    if optimizer:
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     epoch = checkpoint["epoch"]
     loss = checkpoint["loss"]
     best_acc = checkpoint["best_acc"]
