@@ -51,6 +51,24 @@ class SimulationDataset(Dataset):
 
 
 def _test():
+    def visualize(transpose_channels=False, figsize=(30, 30), **images):
+        """
+        Helper function for data visualization
+        PyTorch CHW tensor will be converted to HWC if `transpose_channels=True`
+        """
+        n_images = len(images)
+
+        plt.figure(figsize=figsize)
+        for idx, (key, image) in enumerate(images.items()):
+            plt.subplot(1, n_images, idx + 1)
+            plt.title(key.replace("_", " ").title(), fontsize=12)
+            if transpose_channels:
+                plt.imshow(np.transpose(image, (1, 2, 0)))
+            else:
+                plt.imshow(image)
+            plt.axis("off")
+        plt.show()
+
     file = "dataset.csv"
 
     transform = torchvision.transforms.Compose(
@@ -63,8 +81,11 @@ def _test():
         ]
     )
 
+    selected_dataframe_columns = ["Cl", "Cd", "Cm"]
+    # selected_dataframe_columns = [f"Cp{i}" for i in range(1, 301)]
+
     dataset = SimulationDataset(
-        file, ["images"], ["Cl", "Cd", "Cm"], transform=transform
+        file, ["images_pressure"], selected_dataframe_columns, transform=transform
     )
 
     selected_index = 0
@@ -78,6 +99,7 @@ def _test():
 
 if __name__ == "__main__":
     import torchvision
-    from src.visualization import visualize
+    import numpy as np
+    import matplotlib.pyplot as plt
 
     _test()

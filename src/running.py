@@ -52,12 +52,12 @@ class Runner:
     def _backward(self, loss) -> None:
         self.optimizer.zero_grad()
 
-        # self.scaler.scale(loss).backward()
-        # self.scaler.step(self.optimizer)
-        # self.scaler.update()
+        self.scaler.scale(loss).backward()
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
 
-        loss.backward()
-        self.optimizer.step()
+        # loss.backward()
+        # self.optimizer.step()
 
     def _parse_data(
         self, inputs: torch.Tensor, targets: torch.Tensor
@@ -94,13 +94,13 @@ class Runner:
             inputs, targets = self._parse_data(inputs, targets)
 
             if self.optimizer:
-                # with torch.autocast(
-                #     device_type=self.device.type,
-                #     dtype=self.dtype_autocast,
-                #     cache_enabled=True,
-                # ):
-                #     loss, predictions = self._forward(inputs, targets)
-                loss, predictions = self._forward(inputs, targets)
+                with torch.autocast(
+                    device_type=self.device.type,
+                    dtype=self.dtype_autocast,
+                    cache_enabled=True,
+                ):
+                    loss, predictions = self._forward(inputs, targets)
+                # loss, predictions = self._forward(inputs, targets)
                 self._backward(loss)
             else:
                 with torch.no_grad():

@@ -12,16 +12,18 @@ from src.timeit import timeit
 
 
 # hyperparameters
-BATCH_SIZE = 1  # 28
-NUM_EPOCHS_FEATURE_EXTRACTION = 20
-NUM_EPOCHS_FINETUNNING = 100
-NUM_WORKERS = 0
+BATCH_SIZE = 28
+NUM_EPOCHS_FEATURE_EXTRACTION = 30
+NUM_EPOCHS_FINETUNNING = 170
+NUM_WORKERS = 8
 LEARNING_RATE = 1e-5
+MODEL_NAME = AvailableModels.VIT
 LOAD_MODEL = False
 PATH_TO_DATASET = "dataset.csv"
 LOG_ROOTDIR = "./tensorboard_runs/"
-INPUT_COLUMN_NAMES = ["images", "images"]
-OUTPUT_COLUMN_NAMES = ["Cl", "Cd", "Cm"]
+INPUT_COLUMN_NAMES = ["images_pressure"]
+# OUTPUT_COLUMN_NAMES = ["Cl", "Cd", "Cm"]
+OUTPUT_COLUMN_NAMES = [f"Cp{i}" for i in range(1, 301)]
 USE_DATA_AUGMENTATION = False
 
 # torch.use_deterministic_algorithms(True)
@@ -39,12 +41,10 @@ def main():
     for the desired number of epochs.
     """
 
-    model_name = AvailableModels.VIT
-
-    is_inception = bool(model_name == AvailableModels.INCEPTION)
+    is_inception = bool(MODEL_NAME == AvailableModels.INCEPTION)
 
     model, transform_preprocess = get_model(
-        model_name,
+        MODEL_NAME,
         num_classes=len(OUTPUT_COLUMN_NAMES),
         num_input_images=len(INPUT_COLUMN_NAMES),
         is_inception=is_inception,
@@ -69,9 +69,9 @@ def main():
     )
 
     optimizer = torch.optim.NAdam(model.parameters(), lr=LEARNING_RATE)
-    early_stopping = EarlyStopping(patience=100)
+    early_stopping = EarlyStopping(patience=40)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=40, factor=0.6, verbose=True
+        optimizer, patience=13, factor=0.6, verbose=True
     )
 
     train_runner = Runner(
@@ -79,9 +79,11 @@ def main():
     )
     valid_runner = Runner(valid_loader, model, is_inception=is_inception)
 
-    tracker = TensorboardTracker(log_dir=LOG_ROOTDIR + model_name.name)
+    tracker = TensorboardTracker(log_dir=LOG_ROOTDIR + MODEL_NAME.name)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f"Running on {device}")
 
     if LOAD_MODEL:
         (
@@ -93,15 +95,21 @@ def main():
         train_runner.epoch = epoch_from_previous_run
         valid_runner.epoch = epoch_from_previous_run
     else:
+        print("\nStart feature extraction")
+
         best_acc = np.inf
+        # pylint: disable-next=unused-variable
         for epoch in range(NUM_EPOCHS_FEATURE_EXTRACTION):
             epoch_loss, epoch_acc = run_epoch(
                 train_runner=train_runner,
                 valid_runner=valid_runner,
                 tracker=tracker,
             )
+            print(f"Epoch acc: {epoch_acc} \t Epoch loss: {epoch_loss}\n")
 
     train_runner.activate_gradients()
+
+    print("\nStart fine tuning")
 
     for epoch in range(NUM_EPOCHS_FINETUNNING):
         epoch_loss, epoch_acc = run_epoch(
@@ -119,24 +127,15 @@ def main():
         # Flush tracker after every epoch for live updates
         tracker.flush()
 
-        # should_save_model = best_acc > epoch_acc # FIXME
-        should_save_model = (best_acc > epoch_acc) and epoch > (
-            NUM_EPOCHS_FINETUNNING - 2
-        )
+        should_save_model = best_acc > epoch_acc
         if should_save_model:
             best_acc = epoch_acc
             save_checkpoint(
                 valid_runner.model, optimizer, valid_runner.epoch, epoch_loss, best_acc
             )
+            print(f"Best acc: {epoch_acc} \t Best loss: {epoch_loss}")
 
-    # FIXME
-    # CHECK IF THE MODEL IS OVERFITING DATA
-    train_loader_iter = iter(train_loader)
-    inputs, targets = next(train_loader_iter)
-    targets = torch.t(torch.stack(targets))
-    predictions = valid_runner.infer(inputs)
-    print(targets)
-    print(predictions)
+        print(f"Epoch acc: {epoch_acc} \t Epoch loss: {epoch_loss}\n")
 
 
 if __name__ == "__main__":
