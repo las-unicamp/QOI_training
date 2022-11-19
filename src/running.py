@@ -71,6 +71,8 @@ class Runner:
         return inputs, targets
 
     def infer(self, inputs: torch.Tensor) -> torch.Tensor:
+        if self.model.training:
+            self.model.eval()
         with torch.no_grad():
             inputs = torch.hstack(inputs)
             inputs = inputs.to(device=self.device, dtype=torch.float32)
