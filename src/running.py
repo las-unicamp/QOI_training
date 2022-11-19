@@ -79,12 +79,11 @@ class Runner:
             predictions = self.model(inputs)
         return predictions
 
-    def run(self, tracker: NetworkTracker) -> List[float]:
+    def run(self, tracker: NetworkTracker) -> tuple[float, torch.Tensor]:
         num_batches = len(self.loader)
         progress_bar = tqdm(enumerate(self.loader), total=num_batches, leave=True)
 
         epoch_loss = 0.0
-        epoch_acc = 0.0
 
         if self.optimizer:
             self.model.train()
@@ -107,7 +106,7 @@ class Runner:
                 with torch.no_grad():
                     loss, predictions = self._forward(inputs, targets, is_train=False)
 
-            accuracy = self.metric(predictions, targets)
+            accuracy = self.metric.forward(predictions, targets)
 
             # Update tqdm progress bar
             progress_bar.set_description(
@@ -121,11 +120,12 @@ class Runner:
             tracker.add_batch_metric("accuracy", accuracy.item(), batch_index)
 
             epoch_loss += loss.item()
-            epoch_acc += accuracy.item()
 
         self.epoch += 1
         epoch_loss = epoch_loss / num_batches
-        epoch_acc = epoch_acc / num_batches
+        epoch_acc = self.metric.compute()
+
+        self.metric.reset()
 
         return epoch_loss, epoch_acc
 
@@ -136,7 +136,7 @@ class Runner:
 
 def run_epoch(
     train_runner: Runner, valid_runner: Runner, tracker: NetworkTracker
-) -> None:
+) -> tuple[float, float]:
     tracker.set_stage(Stage.TRAIN)
     train_epoch_loss, train_epoch_acc = train_runner.run(tracker)
 
