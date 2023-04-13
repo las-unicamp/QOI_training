@@ -1,4 +1,4 @@
-from typing import Any, Optional, List
+from typing import Any, Optional, Tuple
 from tqdm import tqdm
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -61,7 +61,7 @@ class Runner:
 
     def _parse_data(
         self, inputs: torch.Tensor, targets: torch.Tensor
-    ) -> List[torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         inputs = torch.hstack(inputs)
         targets = torch.t(torch.stack(targets))
 
@@ -79,7 +79,7 @@ class Runner:
             predictions = self.model(inputs)
         return predictions
 
-    def run(self, tracker: NetworkTracker) -> tuple[float, torch.Tensor]:
+    def run(self, tracker: NetworkTracker) -> Tuple[float, torch.Tensor]:
         num_batches = len(self.loader)
         progress_bar = tqdm(enumerate(self.loader), total=num_batches, leave=True)
 
@@ -136,7 +136,7 @@ class Runner:
 
 def run_epoch(
     train_runner: Runner, valid_runner: Runner, tracker: NetworkTracker
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
     tracker.set_stage(Stage.TRAIN)
     train_epoch_loss, train_epoch_acc = train_runner.run(tracker)
 
