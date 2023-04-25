@@ -93,14 +93,14 @@ def get_model(
 
 
 def test():
-    model_name = AvailableModels.EFFICIENT
+    model_name = AvailableModels.VIT
 
     model_fn, weights, fine_tune_strategy = _factory_model(model_name)
 
     model = model_fn(weights=weights)
 
-    for param in model.parameters():
-        param.requires_grad = False
+    # for param in model.parameters():
+    #     param.requires_grad = False
 
     model = fine_tune_strategy.change_num_classes(model, num_classes=3)
     print(model)
@@ -112,6 +112,11 @@ def test():
             params_to_update.append(param)
             print("\t", name, param.shape)
 
+
+    total_number_of_parameters = sum(
+        param.numel() for param in model.parameters() if param.requires_grad
+    )
+    print(f"Total number of parameters: {total_number_of_parameters}")
 
 if __name__ == "__main__":
     test()
