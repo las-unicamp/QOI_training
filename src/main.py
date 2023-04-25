@@ -22,8 +22,10 @@ LOAD_MODEL = False
 PATH_TO_DATASET = "dataset.csv"
 LOG_ROOTDIR = "./tensorboard_runs/"
 INPUT_COLUMN_NAMES = ["images_pressure"]
+# INPUT_COLUMN_NAMES = ["images_vel_x", "images_vel_y"]
 # OUTPUT_COLUMN_NAMES = ["Cl", "Cd", "Cm"]
 OUTPUT_COLUMN_NAMES = [f"Cp{i}" for i in range(1, 301)]
+# OUTPUT_COLUMN_NAMES = [f"Cf{i}" for i in range(1, 301)]
 USE_DATA_AUGMENTATION = False
 
 # torch.use_deterministic_algorithms(True)
